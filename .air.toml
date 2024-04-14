@@ -3,22 +3,22 @@ testdata_dir = "testdata"
 tmp_dir = "./etc/tmp"
 
 [build]
-args_bin = []
-bin = "./etc/tmp/main"
-cmd = "go build -race -o ./etc/tmp/main cmd/server/*.go"
-delay = 1000
-exclude_dir = ["tmp", "test", "log", "etc"]
-exclude_file = []
-exclude_regex = ["_test.go"]
-exclude_unchanged = false
-follow_symlink = false
-full_bin = ""
-include_dir = []
-include_ext = ["go", "tpl", "tmpl", "html"]
-kill_delay = "0s"
-log = "build-errors.log"
-send_interrupt = false
-stop_on_error = true
+args_bin = [] 
+bin = "./etc/tmp/main" 
+cmd = "go build -o ./etc/tmp/main.exe cmd/server/main.go" # after go env -w CGO_ENABLED=1
+delay = 1000 
+exclude_dir = ["tmp", "test", "log", "etc"] 
+exclude_file = [] 
+exclude_regex = ["_test.go"] 
+exclude_unchanged = false 
+follow_symlink = false 
+full_bin = "" 
+include_dir = [] 
+include_ext = ["go", "tpl", "tmpl", "html"] 
+kill_delay = "0s" 
+log = "build-errors.log" 
+send_interrupt = false 
+stop_on_error = true 
 
 [color]
 app = ""
