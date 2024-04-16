@@ -2,55 +2,43 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
+	"log"
 	"os"
+	"streaming/api"
+	"streaming/initializers"
 
-	"gopkg.in/yaml.v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
-
-// Config structure defining structure of config.yaml
-type Config struct {
-	IngressURL string `yaml:"ingress_url"`
-}
-
-// ReadConfig reads YAML configuration from file
-func ReadConfig() (*Config, error) {
-	configFile, err := ioutil.ReadFile("config.yaml")
-	if err != nil {
-		return nil, err
-	}
-	config := &Config{}
-	err = yaml.Unmarshal(configFile, config)
-	if err != nil {
-		return nil, err
-	}
-	return config, nil
-}
 
 // main function
 func main() {
-	config, err := ReadConfig()
+	config, err := initializers.LoadConfig()
 	if err != nil {
-		fmt.Println("Error reading config:", err)
+		fmt.Printf("Error reading config: %s\n", err)
 		os.Exit(1)
 	}
 
-	target, err := url.Parse(config.IngressURL)
-	if err != nil {
-		fmt.Println("Error parsing ingress URL:", err)
-		os.Exit(1)
-	}
+	fmt.Println("config: ", *config)
 
-	proxy := httputil.NewSingleHostReverseProxy(target)
-	http.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		proxy.ServeHTTP(rw, req)
+	app := fiber.New(fiber.Config{
+		ServerHeader: "PaxStreaming",
+		BodyLimit:    20 * 1024 * 1024, // 20 MB
 	})
 
-	fmt.Println("Starting proxy server on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		fmt.Println("Error starting server:", err)
-	}
+	micro := fiber.New()
+
+	app.Use(logger.New())
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "*",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization, Access-Control-Allow-Headers, Session, Mode",
+		AllowMethods:     "GET, POST, PATCH, DELETE",
+		AllowCredentials: false,
+	}))
+
+	api.Register(config, micro)
+
+	log.Fatal(app.Listen(":8080"))
 }

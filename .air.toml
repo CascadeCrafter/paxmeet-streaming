@@ -4,7 +4,7 @@ tmp_dir = "./etc/tmp"
 
 [build]
 args_bin = [] 
-bin = "./etc/tmp/main" 
+bin = "./etc/tmp/main.exe" 
 cmd = "go build -o ./etc/tmp/main.exe cmd/server/main.go" # after go env -w CGO_ENABLED=1
 delay = 1000 
 exclude_dir = ["tmp", "test", "log", "etc"] 
