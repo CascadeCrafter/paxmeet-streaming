@@ -40,5 +40,7 @@ func main() {
 
 	api.Register(config, micro)
 
+	app.Mount("/", micro)
+
 	log.Fatal(app.Listen(":8080"))
 }
