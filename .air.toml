@@ -7,7 +7,7 @@ args_bin = []
 bin = "./etc/tmp/main.exe" 
 cmd = "go build -o ./etc/tmp/main.exe cmd/server/main.go" # after go env -w CGO_ENABLED=1
 delay = 1000 
-exclude_dir = ["tmp", "test", "log", "etc"] 
+exclude_dir = ["tmp", "test", "log", "etc", ".git"] 
 exclude_file = [] 
 exclude_regex = ["_test.go"] 
 exclude_unchanged = false 
