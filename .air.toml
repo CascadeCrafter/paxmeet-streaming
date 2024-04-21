@@ -1,11 +1,11 @@
 root = "."
 testdata_dir = "testdata"
-tmp_dir = "./etc/tmp"
+tmp_dir = "./tmp"
 
 [build]
 args_bin = [] 
-bin = "./etc/tmp/main.exe" 
-cmd = "go build -o ./etc/tmp/main.exe cmd/server/main.go" # after go env -w CGO_ENABLED=1
+bin = "./tmp/main" 
+cmd = "go build -o ./tmp/main cmd/server/main.go" # after go env -w CGO_ENABLED=1
 delay = 1000 
 exclude_dir = ["tmp", "test", "log", "etc", ".git"] 
 exclude_file = [] 
