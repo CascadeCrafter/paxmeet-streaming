@@ -14,4 +14,10 @@ func Register(config *initializers.Config, micro *fiber.App) {
 			return controllers.LivekitHandler(c, config)
 		})
 	})
+
+	micro.Route("/auth", func(router fiber.Router) {
+		router.Post("/token", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
+			return controllers.GenerateToken(c, config)
+		})
+	})
 }

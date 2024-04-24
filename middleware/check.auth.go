@@ -7,45 +7,58 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
-func CheckAuth(auth_uri string) func(c *fiber.Ctx) error {
+// Define userDetailsResponse according to the structure we expect to receive from the auth server
+type UserDetailsResponse struct {
+	ID           uuid.UUID `json:"userID"`
+	Photo        string    `json:"photo"`
+	Name         string    `json:"name"`
+	Role         string    `json:"role"`
+	TelegramName string    `json:"telegramname"`
+}
+
+type APIResponse struct {
+	Status string              `json:"status"`
+	Data   UserDetailsResponse `json:"data"`
+}
+
+func CheckAuth(authURI string) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		token := c.Get("Authorization")
 		if token == "" {
-			fmt.Println("Unauthorized")
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
 		}
-		req, err := http.NewRequest("GET", auth_uri, nil)
+
+		req, err := http.NewRequest("GET", authURI, nil)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Internal Server Error"})
 		}
-
 		req.Header.Add("Authorization", token)
-		client := &http.Client{}
 
+		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil || resp.StatusCode != http.StatusOK {
-			return c.Status(fiber.StatusForbidden).SendString("Forbidden")
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"message": "Forbidden"})
 		}
 
-		// Read the response body
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Error reading response body from auth server"})
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Error reading response body"})
 		}
 		defer resp.Body.Close()
 
-		var userDetails map[string]interface{}
-		if err := json.Unmarshal(body, &userDetails); err != nil {
+		// Unmarshal the body into the userDetailsResponse struct
+		var apiResponse APIResponse
+		if err := json.Unmarshal(body, &apiResponse); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Error parsing response body"})
 		}
 
-		// Store user details in Locals for access in subsequent handlers
-		c.Locals("user", userDetails)
+		// Store the structured userDetails into Locals
+		c.Locals("userDetails", apiResponse.Data)
 
 		fmt.Println("Authentication Passed...")
-
 		return c.Next()
 	}
 }
