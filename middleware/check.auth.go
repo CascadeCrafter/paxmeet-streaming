@@ -7,16 +7,16 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 )
 
 // Define userDetailsResponse according to the structure we expect to receive from the auth server
 type UserDetailsResponse struct {
-	ID           uuid.UUID `json:"userID"`
-	Photo        string    `json:"photo"`
-	Name         string    `json:"name"`
-	Role         string    `json:"role"`
-	TelegramName string    `json:"telegramname"`
+	// ID           uuid.UUID `json:"userID"`
+	ID           string `json:"userID"`
+	Photo        string `json:"photo"`
+	Name         string `json:"name"`
+	Role         string `json:"role"`
+	TelegramName string `json:"telegramname"`
 }
 
 type APIResponse struct {
@@ -32,6 +32,7 @@ func CheckAuth(authURI string) func(c *fiber.Ctx) error {
 		}
 
 		req, err := http.NewRequest("GET", authURI, nil)
+
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Internal Server Error"})
 		}
@@ -51,6 +52,7 @@ func CheckAuth(authURI string) func(c *fiber.Ctx) error {
 
 		// Unmarshal the body into the userDetailsResponse struct
 		var apiResponse APIResponse
+
 		if err := json.Unmarshal(body, &apiResponse); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Error parsing response body"})
 		}

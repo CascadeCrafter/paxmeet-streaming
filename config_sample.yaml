@@ -6,4 +6,4 @@ livekit:
   api_secret: 6aNur7qqupeZhFYNOJVUyeXxXhVw8f4lm13pEDUx8SgB
 
 auth:
-  uri: https://go.paxintrade.com
+  uri: https://go.paxintrade.com/api/auth/check

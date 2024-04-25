@@ -7,7 +7,7 @@ import (
 	"github.com/livekit/protocol/auth"
 )
 
-func CreateToken(roomId, userId, userName, userAvatar string, config *initializers.Config) (string, error) {
+func CreateToken(isStreamer bool, roomId, userId, userName, userAvatar string, config *initializers.Config) (string, error) {
 
 	LiveKitAPISecret := config.LiveKit.APISecret
 	LiveKitAPIKey := config.LiveKit.APIKey
@@ -17,7 +17,7 @@ func CreateToken(roomId, userId, userName, userAvatar string, config *initialize
 	grant := &auth.VideoGrant{
 		RoomJoin:       true,
 		Room:           roomId,
-		CanPublish:     &trueVal,
+		CanPublish:     &isStreamer,
 		CanPublishData: &trueVal,
 	}
 	at.AddGrant(grant).

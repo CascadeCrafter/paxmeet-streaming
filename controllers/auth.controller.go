@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"streaming/initializers"
 	"streaming/middleware"
 	"streaming/utils"
@@ -12,7 +13,8 @@ func GenerateToken(c *fiber.Ctx, config *initializers.Config) error {
 
 	// Define the struct to get livekit Token
 	type RequestData struct {
-		RoomId string `json:"roomId"`
+		RoomId     string `json:"roomId"`
+		IsStreamer bool   `json:"isSreamer"`
 	}
 
 	user, ok := c.Locals("userDetails").(middleware.UserDetailsResponse)
@@ -28,10 +30,13 @@ func GenerateToken(c *fiber.Ctx, config *initializers.Config) error {
 	var requestData RequestData
 	if err := c.BodyParser(&requestData); err != nil {
 		// Handle parsing error
-		return err
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": fmt.Sprintf("Failed to parse request body: %v", err),
+		})
 	}
 
-	livekitToken, err := utils.CreateToken(requestData.RoomId, user.ID.String(), user.Name, user.Photo, config)
+	livekitToken, err := utils.CreateToken(requestData.IsStreamer,requestData.RoomId, user.ID, user.Name, user.Photo, config)
 
 	if err != nil {
 		// Handler case when user details are not properly set or wrong type
