@@ -40,7 +40,7 @@ func CheckAuth(authURI string) func(c *fiber.Ctx) error {
 
 		client := &http.Client{}
 		resp, err := client.Do(req)
-		if err != nil || resp.StatusCode != http.StatusOK {
+		if err != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"message": "Forbidden"})
 		}
 
