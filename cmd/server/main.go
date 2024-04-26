@@ -15,6 +15,7 @@ import (
 // main function
 func main() {
 	config, err := initializers.LoadConfig()
+	initializers.ConnectRedis(config)
 	if err != nil {
 		fmt.Printf("Error reading config: %s\n", err)
 		os.Exit(1)

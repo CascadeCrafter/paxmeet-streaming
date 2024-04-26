@@ -25,13 +25,16 @@ func Register(config *initializers.Config, micro *fiber.App) {
 		router.Post("/room/create", func(c *fiber.Ctx) error {
 			return controllers.CreateTradingRoom(c, config)
 		})
-		router.Get("/room/get", func(c *fiber.Ctx) error {
+		router.Get("/room/get/:roomId", func(c *fiber.Ctx) error {
 			return controllers.GetTradingRoom(c, config)
 		})
-		router.Post("/room/join", func(c *fiber.Ctx) error {
+		router.Get("/rooms/all", func(c *fiber.Ctx) error {
+			return controllers.GetAllTradingRooms(c, config)
+		})
+		router.Get("/room/join/:roomId", func(c *fiber.Ctx) error {
 			return controllers.JoinTradingRoom(c, config)
 		})
-		router.Delete("/room/delete", func(c *fiber.Ctx) error {
+		router.Delete("/room/delete/:roomId", func(c *fiber.Ctx) error {
 			return controllers.DeleteTradingRoom(c, config)
 		})
 	})
