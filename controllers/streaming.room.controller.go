@@ -15,16 +15,16 @@ import (
 
 // Creating a struct to encapsulate both RoomId, Products, and PublisherId
 type RoomDetails struct {
-	Products    string `json:"products"`
-	PublisherId string `json:"publisherId"`
+	Products    []string `json:"products"`
+	PublisherId string   `json:"publisherId"`
 }
 
 func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 
 	// Define the struct to get livekit Token
 	type RequestData struct {
-		RoomId   string `json:"roomId"`
-		Products string `json:"products"`
+		RoomId   string   `json:"roomId"`
+		Products []string `json:"products"`
 	}
 
 	user, ok := c.Locals("userDetails").(middleware.UserDetailsResponse)
