@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Auth    AuthConfig    `yaml:"auth"`
 	LiveKit LiveKitConfig `yaml:"livekit"`
+	Redis   RedisConfig   `yaml:"redis"`
 }
 
 // LiveKitConfig represents the nested "livekit" structure in the YAML
@@ -22,6 +23,11 @@ type LiveKitConfig struct {
 // AuthConfig represents the nested "auth" structure in the YAML
 type AuthConfig struct {
 	Uri string `yaml:"uri"`
+}
+
+// RedisConfig represents the nested "redis" structure in the YAML
+type RedisConfig struct {
+	Url string `yaml:"url"`
 }
 
 // ReadConfig reads and unmarshals YAML configuration from a file
