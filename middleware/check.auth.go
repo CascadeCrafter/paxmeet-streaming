@@ -44,11 +44,30 @@ func CheckAuth(authURI string) func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"message": "Forbidden"})
 		}
 
+		defer resp.Body.Close()
+
+		// If status is not OK, read the body and forward the auth service's response
+		if resp.StatusCode != http.StatusOK {
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Error reading auth service response"})
+			}
+
+			// Parse the response to check if it's a valid JSON
+			var respContent interface{}
+			if err := json.Unmarshal(body, &respContent); err != nil {
+				// If not a JSON or failed to parse, forward as plain text
+				return c.Status(resp.StatusCode).SendString(string(body))
+			}
+
+			// If the response is JSON, forward it as such
+			return c.Status(resp.StatusCode).JSON(respContent)
+		}
+
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Error reading response body"})
 		}
-		defer resp.Body.Close()
 
 		// Unmarshal the body into the userDetailsResponse struct
 		var apiResponse APIResponse
