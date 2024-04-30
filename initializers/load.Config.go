@@ -11,6 +11,7 @@ type Config struct {
 	Auth    AuthConfig    `yaml:"auth"`
 	LiveKit LiveKitConfig `yaml:"livekit"`
 	Redis   RedisConfig   `yaml:"redis"`
+	Backend BackendConfig `yaml:"backend"`
 }
 
 // LiveKitConfig represents the nested "livekit" structure in the YAML
@@ -22,6 +23,11 @@ type LiveKitConfig struct {
 
 // AuthConfig represents the nested "auth" structure in the YAML
 type AuthConfig struct {
+	Uri string `yaml:"uri"`
+}
+
+// BackendConfig represents the nested "auth" structure in the YAML
+type BackendConfig struct {
 	Uri string `yaml:"uri"`
 }
 
