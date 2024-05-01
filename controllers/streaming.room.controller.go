@@ -17,6 +17,7 @@ import (
 type RoomDetails struct {
 	Products    []string `json:"products"`
 	PublisherId string   `json:"publisherId"`
+	Title       string   `json:"title"`
 }
 
 func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
@@ -25,6 +26,7 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	type RequestData struct {
 		RoomId   string   `json:"roomId"`
 		Products []string `json:"products"`
+		Title    string   `json:"title"`
 	}
 
 	user, ok := c.Locals("userDetails").(middleware.UserDetailsResponse)
@@ -50,6 +52,7 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	roomDetails := RoomDetails{
 		Products:    requestData.Products,
 		PublisherId: user.ID,
+		Title:       requestData.Title,
 	}
 
 	// Convert roomDetails into a JSON string
