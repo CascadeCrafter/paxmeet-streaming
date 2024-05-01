@@ -46,7 +46,7 @@ pipelines:
                 go mod download
 
                 echo "Building the application..."
-                GO111MODULE=on go build -v -o bin/paxintrade-streaming cmd/main.go
+                GO111MODULE=on go build -v -o bin/paxintrade-streaming cmd/server/main.go
 
                 if [ $? -ne 0 ]; then
                     echo "Build failed."
