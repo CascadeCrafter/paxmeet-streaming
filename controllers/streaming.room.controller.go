@@ -17,9 +17,9 @@ import (
 
 // Creating a struct to encapsulate both RoomId, Products, and PublisherId
 type RoomDetails struct {
-	Products    json.RawMessage `json:"products"`
-	PublisherId string          `json:"publisherId"`
-	Title       string          `json:"title"`
+	Products  json.RawMessage                `json:"products"`
+	Publisher middleware.UserDetailsResponse `json:"publisher"`
+	Title     string                         `json:"title"`
 }
 
 func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
@@ -63,9 +63,9 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 
 	// Assign values to RoomDetails
 	roomDetails := RoomDetails{
-		Products:    fetchedProducts,
-		PublisherId: user.ID,
-		Title:       requestData.Title,
+		Products:  fetchedProducts,
+		Publisher: user,
+		Title:     requestData.Title,
 	}
 
 	// Convert roomDetails into a JSON string
