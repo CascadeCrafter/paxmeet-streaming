@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"streaming/initializers"
 	"streaming/middleware"
 	"streaming/utils"
@@ -15,9 +17,9 @@ import (
 
 // Creating a struct to encapsulate both RoomId, Products, and PublisherId
 type RoomDetails struct {
-	Products    []string `json:"products"`
-	PublisherId string   `json:"publisherId"`
-	Title       string   `json:"title"`
+	Products    json.RawMessage `json:"products"`
+	PublisherId string          `json:"publisherId"`
+	Title       string          `json:"title"`
 }
 
 func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
@@ -48,9 +50,20 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 		})
 	}
 
+	// ** Here Fetch data from backend with requestData.Products and store Products **
+	// Use the new function to fetch product details
+	fetchedProducts, err := fetchProductDetailsFromBackend(requestData.Products, user.ID)
+	if err != nil {
+		// Handle error
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": fmt.Sprintf("Error fetching product details: %v", err),
+		})
+	}
+
 	// Assign values to RoomDetails
 	roomDetails := RoomDetails{
-		Products:    requestData.Products,
+		Products:    fetchedProducts,
 		PublisherId: user.ID,
 		Title:       requestData.Title,
 	}
@@ -218,4 +231,49 @@ func DeleteTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status": "success",
 	})
+}
+
+func fetchProductDetailsFromBackend(productIDs []string, publisherID string) ([]byte, error) {
+	// Construct the request payload
+	requestPayload := struct {
+		IDs       []string `json:"ids"`
+		Publisher string   `json:"publisher"`
+	}{
+		IDs:       productIDs,
+		Publisher: publisherID,
+	}
+
+	// Convert the request payload to JSON bytes
+	payloadBytes, err := json.Marshal(requestPayload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request payload: %w", err)
+	}
+
+	// Execute the POST request to the backend service
+	resp, err := http.Post("https://go.paxintrade.com/api/blog/filterByIds", "application/json", bytes.NewReader(payloadBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch data from backend: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check if the response status code is not 200
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("backend responded with non-200 status code: %d", resp.StatusCode)
+	}
+
+	// Assuming the structure of the response for our case is known and consistent
+	// Decode the entire response to access the Blogs part
+	var backendResponse struct {
+		Blogs  json.RawMessage `json:"blogs"` // Use json.RawMessage to get the raw JSON
+		Status string          `json:"status"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&backendResponse); err != nil {
+		return nil, fmt.Errorf("failed to decode backend response: %w", err)
+	}
+
+	// If needed, perform further processing on backendResponse.Blogs, which is raw JSON
+
+	// Return the raw JSON of the Blogs part directly
+	return backendResponse.Blogs, nil
 }

@@ -7,6 +7,9 @@ livekit:
 
 auth:
   uri: https://go.paxintrade.com/api/auth/check
-  
+
+backend:
+  uri: https://go.paxintrade.com/api
+
 redis:
   url: localhost:6379
