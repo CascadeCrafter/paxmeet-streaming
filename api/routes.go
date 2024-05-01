@@ -21,6 +21,14 @@ func Register(config *initializers.Config, micro *fiber.App) {
 		})
 	})
 
+	// Health check route
+	micro.Get("/health", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status":  "success",
+			"message": "Service is up and running!",
+		})
+	})
+
 	micro.Route("/streaming", func(router fiber.Router) {
 		router.Post("/room/create", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
 			return controllers.CreateTradingRoom(c, config)
