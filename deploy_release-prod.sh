@@ -1,7 +1,7 @@
 #!/bin/sh
 
 SERVICE_PATH="~/workspace/paxintrade/paxmeet/streaming"
-SERVICE_NAME="paxintrade-streaming"
+SERVICE_NAME="streaming"
 
 # Abort on errors
 set -e
