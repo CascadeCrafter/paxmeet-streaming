@@ -76,7 +76,7 @@ pipelines:
               if [ "$SHOULD_BUILD" -eq "1" ]; then
                 echo "Building and pushing Docker image to ECR..."
                 # Define environment values
-                export IMAGE_NAME=paxintrade-streaming
+                export IMAGE_NAME=paxmeet-streaming
                 export IMAGE_TAG=$(echo $BITBUCKET_COMMIT | cut -c 1-7)
                 export IMAGE_LATEST_TAG=latest
 
