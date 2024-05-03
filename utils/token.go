@@ -22,7 +22,7 @@ func CreateToken(isStreamer bool, roomId, userId, userName, userAvatar string, c
 	}
 	at.AddGrant(grant).
 		SetIdentity(userId).
-		SetValidFor(time.Hour).
+		SetValidFor(6 * time.Hour).
 		SetMetadata(userAvatar).
 		SetName(userName)
 
