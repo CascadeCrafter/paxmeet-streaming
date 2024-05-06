@@ -38,9 +38,11 @@ func Register(config *initializers.Config, micro *fiber.App) {
 			func(c *fiber.Ctx) error {
 				return controllers.GetTradingRoom(c, config)
 			})
-		router.Get("/rooms/all", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
-			return controllers.GetAllTradingRooms(c, config)
-		})
+		router.Get("/rooms/all",
+			// middleware.CheckAuth(config.Auth.Uri),
+			func(c *fiber.Ctx) error {
+				return controllers.GetAllTradingRooms(c, config)
+			})
 		router.Get("/room/join/:roomId",
 			// middleware.CheckAuth(config.Auth.Uri),
 			func(c *fiber.Ctx) error {
