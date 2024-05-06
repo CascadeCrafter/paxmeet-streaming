@@ -5,8 +5,10 @@ import (
 	"streaming/initializers"
 	"streaming/middleware"
 	"streaming/utils"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 func GenerateToken(c *fiber.Ctx, config *initializers.Config) error {
@@ -36,7 +38,7 @@ func GenerateToken(c *fiber.Ctx, config *initializers.Config) error {
 		})
 	}
 
-	livekitToken, err := utils.CreateToken(requestData.IsStreamer,requestData.RoomId, user.ID, user.Name, user.Photo, config)
+	livekitToken, err := utils.CreateToken(requestData.IsStreamer, requestData.RoomId, user.ID, user.Name, user.Photo, config)
 
 	if err != nil {
 		// Handler case when user details are not properly set or wrong type
@@ -52,4 +54,34 @@ func GenerateToken(c *fiber.Ctx, config *initializers.Config) error {
 			"token": livekitToken,
 		},
 	})
+}
+
+func RefreshToken(c *fiber.Ctx, config *initializers.Config) error {
+	token := c.Get("token")
+	tokenStr, err := jwt.ParseSigned(token)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "failed to parse token",
+		})
+	}
+	claims := &jwt.Claims{}
+	secret := config.LiveKit.APISecret
+	if err := tokenStr.Claims([]byte(secret), claims); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "failed to parse token",
+		})
+	}
+	expired := claims.Expiry.Time().Before(time.Now())
+	if expired {
+		return GenerateToken(c, config)
+	} else {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status": "success",
+			"data": fiber.Map{
+				"token": token,
+			},
+		})
+	}
 }

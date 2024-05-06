@@ -45,5 +45,8 @@ func Register(config *initializers.Config, micro *fiber.App) {
 		router.Delete("/room/delete/:roomId", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
 			return controllers.DeleteTradingRoom(c, config)
 		})
+		router.Post("/checkTokenExp", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
+			return controllers.RefreshToken(c, config)
+		})
 	})
 }
