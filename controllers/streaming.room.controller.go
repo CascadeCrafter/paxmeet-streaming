@@ -41,15 +41,15 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	}
 
 	// Parse the POST request body into the struct
-	var requestData RequestData
-	if err := c.BodyParser(&requestData); err != nil {
+	requestData := new(RequestData)
+	if err := c.BodyParser(requestData); err != nil {
 		// Handle parsing error
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
 			"message": fmt.Sprintf("Failed to parse request body: %v", err),
 		})
 	}
-
+	
 	// ** Here Fetch data from backend with requestData.Products and store Products **
 	// Use the new function to fetch product details
 	fetchedProducts, err := fetchProductDetailsFromBackend(requestData.Products, user.ID)
@@ -107,41 +107,47 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 func JoinTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 
 	// // Define the struct to get livekit Token
-	// type RequestData struct {
-	// 	RoomId string `json:"roomId"`
-	// }
+	
+	type RequestData struct {
+		UserId string `json:userId`
+		UserPhoto string `json:"photo"`
+		UserName string `json:"userName"`
+	}
+
 
 	roomId := c.Params("roomId")
+
 	// Fetch room details from Redis
-	_, err := initializers.RedisClient.Get(initializers.Ctx, "room:"+roomId).Result()
+	// _, err := initializers.RedisClient.Get(initializers.Ctx, "room:"+roomId).Result()
 
-	if err == redis.Nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"status":  "error",
-			"message": "Room not found",
-		})
-	}
-
-	user, ok := c.Locals("userDetails").(middleware.UserDetailsResponse)
-	if !ok {
-		// Handler case when user details are not properly set or wrong type
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status":  "error",
-			"message": "Server error while retrieving user details",
-		})
-	}
-
-	// // Parse the POST request body into the struct
-	// var requestData RequestData
-	// if err := c.BodyParser(&requestData); err != nil {
-	// 	// Handle parsing error
+	// if err == redis.Nil {
+	// 	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+	// 		"status":  "error",
+	// 		"message": "Room not found",
+	// 	})
+	// }
+	// user, ok := c.Locals("userDetails").(middleware.UserDetailsResponse)
+	// if !ok {
+	// 	// Handler case when user details are not properly set or wrong type
 	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 	// 		"status":  "error",
-	// 		"message": fmt.Sprintf("Failed to parse request body: %v", err),
+	// 		"message": "Server error while retrieving user details",
 	// 	})
 	// }
 
-	livekitToken, err := utils.CreateToken(false, roomId, user.ID, user.Name, user.Photo, config)
+	// // Parse the POST request body into the struct
+	requestData:= &RequestData{}
+	// var userId UserId
+	
+	if err := c.BodyParser(requestData); err != nil {
+		// Handle parsing error
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": fmt.Sprintf("Failed to parse request body: %v", err),
+		})
+	}
+
+	livekitToken, err := utils.CreateToken(false, roomId, requestData.UserId, requestData.UserName, requestData.UserPhoto, config)
 
 	if err != nil {
 		// Handler case when user details are not properly set or wrong type

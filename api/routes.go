@@ -33,23 +33,26 @@ func Register(config *initializers.Config, micro *fiber.App) {
 		router.Post("/room/create", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
 			return controllers.CreateTradingRoom(c, config)
 		})
-		router.Get("/room/get/:roomId",
-			// middleware.CheckAuth(config.Auth.Uri),
+		router.Get("/room/get/:roomId", 
+		// middleware.CheckAuth(config.Auth.Uri), 
 			func(c *fiber.Ctx) error {
 				return controllers.GetTradingRoom(c, config)
 			})
-		router.Get("/rooms/all",
-			// middleware.CheckAuth(config.Auth.Uri),
+		router.Get("/rooms/all", 
+		// middleware.CheckAuth(config.Auth.Uri), 
 			func(c *fiber.Ctx) error {
 				return controllers.GetAllTradingRooms(c, config)
 			})
-		router.Get("/room/join/:roomId",
-			// middleware.CheckAuth(config.Auth.Uri),
+		router.Post("/room/join/:roomId", 
+		// middleware.CheckAuth(config.Auth.Uri), 
 			func(c *fiber.Ctx) error {
 				return controllers.JoinTradingRoom(c, config)
 			})
 		router.Delete("/room/delete/:roomId", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
 			return controllers.DeleteTradingRoom(c, config)
+		})
+		router.Post("/checkTokenExp", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
+			return controllers.RefreshToken(c, config)
 		})
 	})
 }
