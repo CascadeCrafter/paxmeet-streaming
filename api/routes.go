@@ -41,9 +41,11 @@ func Register(config *initializers.Config, micro *fiber.App) {
 		router.Get("/rooms/all", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
 			return controllers.GetAllTradingRooms(c, config)
 		})
-		router.Get("/room/join/:roomId", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
-			return controllers.JoinTradingRoom(c, config)
-		})
+		router.Get("/room/join/:roomId",
+			// middleware.CheckAuth(config.Auth.Uri),
+			func(c *fiber.Ctx) error {
+				return controllers.JoinTradingRoom(c, config)
+			})
 		router.Delete("/room/delete/:roomId", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
 			return controllers.DeleteTradingRoom(c, config)
 		})
