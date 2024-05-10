@@ -49,7 +49,7 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 			"message": fmt.Sprintf("Failed to parse request body: %v", err),
 		})
 	}
-	
+
 	// ** Here Fetch data from backend with requestData.Products and store Products **
 	// Use the new function to fetch product details
 	fetchedProducts, err := fetchProductDetailsFromBackend(requestData.Products, user.ID)
@@ -104,16 +104,58 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	})
 }
 
+func EntryTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
+
+	// Define the struct to get livekit Token
+	type RequestData struct {
+		RoomId string `json:"roomId"`
+	}
+
+	user, ok := c.Locals("userDetails").(middleware.UserDetailsResponse)
+	if !ok {
+		// Handler case when user details are not properly set or wrong type
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Server error while retrieving user details",
+		})
+	}
+
+	// Parse the POST request body into the struct
+	requestData := new(RequestData)
+	if err := c.BodyParser(requestData); err != nil {
+		// Handle parsing error
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": fmt.Sprintf("Failed to parse request body: %v", err),
+		})
+	}
+	livekitToken, err := utils.CreateToken(true, requestData.RoomId, user.ID, user.Name, user.Photo, config)
+
+	if err != nil {
+		// Handler case when user details are not properly set or wrong type
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Error while Generating Livekit Token",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status": "success",
+		"data": fiber.Map{
+			"token": livekitToken,
+		},
+	})
+}
+
 func JoinTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 
 	// // Define the struct to get livekit Token
-	
-	type RequestData struct {
-		UserId string `json:userId`
-		UserPhoto string `json:"photo"`
-		UserName string `json:"userName"`
-	}
 
+	type RequestData struct {
+		UserId    string `json:userId`
+		UserPhoto string `json:"photo"`
+		UserName  string `json:"userName"`
+	}
 
 	roomId := c.Params("roomId")
 
@@ -136,9 +178,9 @@ func JoinTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	// }
 
 	// // Parse the POST request body into the struct
-	requestData:= &RequestData{}
+	requestData := &RequestData{}
 	// var userId UserId
-	
+
 	if err := c.BodyParser(requestData); err != nil {
 		// Handle parsing error
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
