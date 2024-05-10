@@ -87,12 +87,27 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 		})
 	}
 
+	titleLookupKey := "room_titles"
+
 	// After successfully generating a livekit token and before returning success response:
 	err = initializers.RedisClient.Set(initializers.Ctx, "room:"+requestData.RoomId, roomDetailsJSON, 12*time.Hour).Err()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
 			"message": "Failed to store room data in Redis",
+		})
+	}
+
+	// Storing title with reference to roomId in a sorted set
+	err = initializers.RedisClient.ZAdd(initializers.Ctx, titleLookupKey, redis.Z{
+		Score:  0, // You can use Unix timestamp or any other scoring logic if needed
+		Member: requestData.RoomId + ":" + requestData.Title,
+	}).Err()
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Failed to index room title in Redis",
 		})
 	}
 
@@ -335,4 +350,66 @@ func fetchProductDetailsFromBackend(productIDs []string, publisherID string) ([]
 
 	// Return the raw JSON of the Blogs part directly
 	return backendResponse.Blogs, nil
+}
+
+func SearchRoomsByTitle(title string, page, pageSize int) []RoomDetails {
+	titleLookupKey := "room_titles"
+	offset := (page - 1) * pageSize
+	if offset < 0 {
+		offset = 0
+	}
+	count := pageSize
+
+	matchedTitles, err := initializers.RedisClient.ZRange(initializers.Ctx, titleLookupKey, int64(offset), int64(offset+count-1)).Result()
+	if err != nil {
+		return nil
+	}
+
+	var rooms []RoomDetails
+	for _, item := range matchedTitles {
+		parts := strings.SplitN(item, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		roomId := parts[0]
+		roomJSON, err := initializers.RedisClient.Get(initializers.Ctx, "room:"+roomId).Result()
+		if err != nil {
+			return nil
+		}
+
+		var room RoomDetails
+		if err := json.Unmarshal([]byte(roomJSON), &room); err != nil {
+			return nil
+		}
+		rooms = append(rooms, room)
+	}
+
+	return rooms
+}
+
+func GetRoomsWithTitle(c *fiber.Ctx, config *initializers.Config) error {
+	type RequestData struct {
+		Query    string `json:"query"`
+		Page     int    `json:"page"`
+		PageSize int    `json:"pageSize"`
+	}
+
+	requestData := new(RequestData)
+	if err := c.BodyParser(requestData); err != nil {
+		// Handle parsing error
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": fmt.Sprintf("Failed to parse request body: %v", err),
+		})
+	}
+
+	rooms := SearchRoomsByTitle(requestData.Query, requestData.Page, requestData.PageSize)
+	if rooms == nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "error", "message": fmt.Sprintf("Failed to search rooms by title: %v", requestData.Query)})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status": "success",
+		"data":   rooms,
+	})
 }
