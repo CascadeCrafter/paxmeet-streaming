@@ -200,7 +200,7 @@ func JoinTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	// // Define the struct to get livekit Token
 
 	type RequestData struct {
-		UserId    string `json:"userId"`
+		UserId    string `json:userId`
 		UserPhoto string `json:"photo"`
 		UserName  string `json:"userName"`
 	}
