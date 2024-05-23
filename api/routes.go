@@ -58,7 +58,7 @@ func Register(config *initializers.Config, micro *fiber.App) {
 			return controllers.RefreshToken(c, config)
 		})
 
-		router.Post("/search", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
+		router.Post("/searchByTitle", middleware.CheckAuth(config.Auth.Uri), func(c *fiber.Ctx) error {
 			return controllers.GetRoomsWithTitle(c, config)
 		})
 	})
