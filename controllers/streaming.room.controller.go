@@ -32,9 +32,9 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	}
 
 	type Streaming struct {
-		Title  string `json:"title"`
-		RoomID string `json:"roomId"`
-		UserID string `json:"userId"`
+		Title     string    `json:"title"`
+		RoomID    string    `json:"roomId"`
+		UserID    string    `json:"userId"`
 		CreatedAt time.Time `json:"time"`
 	}
 
@@ -119,14 +119,26 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	}
 
 	streaming := Streaming{
-		Title:  requestData.Title,
-		RoomID: requestData.RoomId,
-		UserID: user.ID,
+		Title:     requestData.Title,
+		RoomID:    requestData.RoomId,
+		UserID:    user.ID,
 		CreatedAt: time.Now(),
 	}
 	jsonData, err := json.Marshal(streaming)
-
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Failed to store room data in Redis",
+		})
+	}
 	req, err := http.NewRequest("POST", config.Backend.Uri+"/profile", bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Failed to store room data in Redis",
+		})
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -200,7 +212,7 @@ func JoinTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	// // Define the struct to get livekit Token
 
 	type RequestData struct {
-		UserId    string `json:userId`
+		UserId    string `json:"userId"`
 		UserPhoto string `json:"photo"`
 		UserName  string `json:"userName"`
 	}
@@ -336,13 +348,26 @@ func DeleteTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	}
 
 	type RequestData struct {
-		UserID string `json:"userID"`
+		UserID    string    `json:"userID"`
 		DeletedAt time.Time `json:"time"`
 	}
 	requestData := RequestData{UserID: user.ID, DeletedAt: time.Now()}
 	jsonData, err := json.Marshal(requestData)
 
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Failed to store room data in Redis",
+		})
+	}
 	req, err := http.NewRequest("DELETE", config.Backend.Uri+"/profile/"+roomId, bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Failed to store room data in Redis",
+		})
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
