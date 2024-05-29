@@ -96,6 +96,47 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 		})
 	}
 
+	streaming := Streaming{
+		Title:     requestData.Title,
+		RoomID:    requestData.RoomId,
+		UserID:    user.ID,
+		CreatedAt: time.Now(),
+	}
+	jsonData, err := json.Marshal(streaming)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Failed to marshal JSON data",
+		})
+	}
+	req, err := http.NewRequest("POST", config.Backend.Uri+"/profile/streaming", bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Failed to create request",
+		})
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+
+	if res.StatusCode != http.StatusOK {
+		bodyBytes, _ := ioutil.ReadAll(res.Body)
+		bodyString := string(bodyBytes)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": fmt.Sprintf("Backend request failed with status %d: %s", res.StatusCode, bodyString),
+		})
+	}
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Failed to execute request",
+		})
+	}
 	titleLookupKey := "room_titles"
 
 	// After successfully generating a livekit token and before returning success response:
@@ -117,45 +158,6 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
 			"message": "Failed to index room title in Redis",
-		})
-	}
-
-	streaming := Streaming{
-		Title:     requestData.Title,
-		RoomID:    requestData.RoomId,
-		UserID:    user.ID,
-		CreatedAt: time.Now(),
-	}
-	jsonData, err := json.Marshal(streaming)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status":  "error",
-			"message": "Failed to marshal JSON data",
-		})
-	}
-	req, err := http.NewRequest("POST", config.Backend.Uri+"/profile", bytes.NewBuffer(jsonData))
-
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status":  "error",
-			"message": "Failed to create request",
-		})
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status":  "error",
-			"message": "Failed to execute request",
-		})
-	}
-	if res.StatusCode != http.StatusOK {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status":  "error",
-			"message": "Failed to store room data in Redis",
 		})
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -345,6 +347,7 @@ func GetRooms(c *fiber.Ctx, config *initializers.Config) error {
 	queryParams.Add("category", c.Query("category"))
 	queryParams.Add("hashtag", c.Query("hashtag"))
 	queryParams.Add("money", c.Query("money"))
+	title := c.Query("title")
 	req, err := http.NewRequest("GET", config.Backend.Uri+"/profiles/streaming"+"?"+queryParams.Encode(), nil)
 
 	if err != nil {
@@ -357,7 +360,6 @@ func GetRooms(c *fiber.Ctx, config *initializers.Config) error {
 
 	client := &http.Client{}
 	res, err := client.Do(req)
-
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
@@ -373,7 +375,6 @@ func GetRooms(c *fiber.Ctx, config *initializers.Config) error {
 			"message": fmt.Sprintf("Backend request failed with status %d: %s", res.StatusCode, bodyString),
 		})
 	}
-
 	// type Profile struct {
 	// 	ID        string      `json:"ID"`
 	// 	UserID    string      `json:"UserID"`
@@ -381,33 +382,42 @@ func GetRooms(c *fiber.Ctx, config *initializers.Config) error {
 	// 	Descr     string      `json:"Descr"`
 	// 	Streaming []Streaming `json:"streaming"`
 	// }
+	type Meta struct {
+		Limit int `json:"limit"`
+		Total int `json:"total"`
+	}
 
+	type Response struct {
+		Data   []Streaming `json:"data"`
+		Meta   Meta        `json:"meta"`
+		Status string      `json:"status"`
+	}
 	var streamings []Streaming
-	if err := json.NewDecoder(res.Body).Decode(&streamings); err != nil {
+	var response Response
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err := json.Unmarshal(bodyBytes, &response); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
 			"message": "Failed to decode backend response",
 		})
 	}
-
+	streamings = response.Data
 	rooms := make(map[string]RoomDetails)
-
 	for _, streaming := range streamings {
-		val, err := initializers.RedisClient.Get(initializers.Ctx, streaming.RoomID).Result()
+		val, err := initializers.RedisClient.Get(initializers.Ctx, "room:"+streaming.RoomID).Result()
 		if err != nil {
-			continue // Optionally log this error
+			continue
 		}
 
 		var roomDetails RoomDetails
 		if err := json.Unmarshal([]byte(val), &roomDetails); err != nil {
-			continue // Optionally log this error
+			continue
 		}
-
-		// Extract roomId from the key and use it as a map key
-		roomId := strings.TrimPrefix(streaming.RoomID, "room:")
-		rooms[roomId] = roomDetails
+		if strings.Contains(roomDetails.Title, title) || title == "all" || title == "" { // Extract roomId from the key and use it as a map key
+			roomId := strings.TrimPrefix(streaming.RoomID, "room:")
+			rooms[roomId] = roomDetails
+		}
 	}
-
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status": "success",
 		"rooms":  rooms,
