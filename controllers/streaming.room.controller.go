@@ -111,6 +111,8 @@ func CreateTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	}
 	req, err := http.NewRequest("POST", config.Backend.Uri+"/profile/streaming", bytes.NewBuffer(jsonData))
 
+	fmt.Println(req)
+
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
@@ -347,6 +349,7 @@ func GetRooms(c *fiber.Ctx, config *initializers.Config) error {
 	queryParams.Add("category", c.Query("category"))
 	queryParams.Add("hashtag", c.Query("hashtag"))
 	queryParams.Add("money", c.Query("money"))
+	queryParams.Add("language", c.Query("language"))
 	title := c.Query("title")
 	req, err := http.NewRequest("GET", config.Backend.Uri+"/profiles/streaming"+"?"+queryParams.Encode(), nil)
 
@@ -441,7 +444,7 @@ func DeleteTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 	}
 	requestData := RequestData{UserID: user.ID, DeletedAt: time.Now()}
 	jsonData, err := json.Marshal(requestData)
-
+	fmt.Println("deletedAt:" + requestData.DeletedAt.String())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
@@ -469,6 +472,10 @@ func DeleteTradingRoom(c *fiber.Ctx, config *initializers.Config) error {
 			"message": fmt.Sprintf("Backend request failed with status %d: %s", res.StatusCode, bodyString),
 		})
 	}
+
+	bodyBytes, _ := ioutil.ReadAll(res.Body)
+	bodyString := string(bodyBytes)
+	fmt.Println(bodyString)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",
